@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+   
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Buxoro Viloyati Ob-Havosi</title>
+    
+        <!-- Meta Tavsiflar -->
+        <meta name="description" content="Buxoro viloyati tumanlari ob-havosi haqida batafsil ma'lumot. Har bir tuman uchun yangilangan ob-havo prognozlari.">
+        <meta name="keywords" content="Buxoro, ob-havo, tumanlar, Buxoro viloyati ob-havosi, ob-havo prognozi, Buxoro tumanlari">
+        <meta name="author" content="Buxoro Ob-Havo Sayti">
+    
+        <!-- Open Graph meta teglar (social media uchun) -->
+        <meta property="og:title" content="Buxoro Viloyati Ob-Havosi">
+        <meta property="og:description" content="Buxoro viloyati tumanlari ob-havosi haqida batafsil ma'lumot. Har bir tuman uchun yangilangan ob-havo prognozlari.">
+        <meta property="og:image" content="URL to your image">
+        <meta property="og:url" content="URL of your site">
+    
+        <meta name="robots" content="index, follow">
+ 
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f0f8ff;
+            color: #333;
+        }
+        header {
+            background: #007BFF;
+            color: white;
+            text-align: center;
+            padding: 1rem 0;
+        }
+        main {
+            padding: 2rem;
+            text-align: center;
+        }
+        ul {
+            list-style: none;
+            padding: 0;
+        }
+        ul li {
+            margin: 1rem 0;
+        }
+        a {
+            text-decoration: none;
+            color: #007BFF;
+            font-size: 1.2rem;
+        }
+        a:hover {
+            text-decoration: underline;
+        }
+        footer {
+            background: #333;
+            color: white;
+            text-align: center;
+            padding: 1rem 0;
+        }
+        .weather-box {
+            margin-top: 20px;
+            padding: 15px;
+            border: 1px solid #ddd;
+            background: #fff;
+            border-radius: 5px;
+            display: inline-block;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>Buxoro Viloyati Tumanlari Ob-Havosi</h1>
+    </header>
+    <main>
+        <ul id="district-list">
+            <!-- Tumanlar ro'yxati -->
+        </ul>
+        <div id="weather-info" class="weather-box" style="display: none;">
+            <h2 id="district-name">Tuman nomi</h2>
+            <div id="weather-details"></div>
+        </div>
+    </main>
+    <footer>
+        <p>&copy; 2024 Buxoro Ob-Havo Sayti</p>
+    </footer>
+    <script>
+        // OpenWeatherMap API sozlamalari
+        const apiKey = "b889750849b0d1c2bd2e528ac62600fa"; 
+        const apiBaseUrl = "https://api.openweathermap.org/data/2.5/";
+        const districts = ["Vobkent", "G'ijduvon", "Buxoro", "Jondor", "Qorovulbozor", "Qorako'l", "Olot", "Shofirkon"];
+
+        // Tumanlar ro'yxatini yaratish
+        const districtList = document.getElementById("district-list");
+        districts.forEach(district => {
+            const listItem = document.createElement("li");
+            const link = document.createElement("a");
+            link.href = "#";
+            link.textContent = district;
+            link.addEventListener("click", () => showWeather(district));
+            listItem.appendChild(link);
+            districtList.appendChild(listItem);
+        });
+
+        // Ob-havo ma'lumotlarini olish (bir haftalik)
+        async function getWeeklyWeather(district) {
+            const url = `${apiBaseUrl}forecast?q=${district}&appid=${apiKey}&units=metric&lang=uz`;
+            try {
+                const response = await fetch(url);
+                const data = await response.json();
+                if (!response.ok) throw new Error("Ma'lumot yuklab bo'lmadi");
+
+                console.log(data);  // Ma'lumotlarni konsolda ko'rish
+                return data;
+            } catch (error) {
+                console.error("Xato:", error);
+                return null;
+            }
+        }
+
+        // Ob-havo ma'lumotlarini ko'rsatish
+        async function showWeather(districtName) {
+            const weatherData = await getWeeklyWeather(districtName);
+            const weatherBox = document.getElementById("weather-info");
+            if (weatherData) {
+                const { list } = weatherData;
+                // Faqat har 8 soatda bir marta ob-havo ma'lumotlarini olish (24 soatlik o'zgarishlarni ko'rsatish)
+                const dailyWeather = list.filter((item, index) => index % 8 === 0); // Har 8 ta element (taxminan bir kun)
+
+                let weatherDetails = `<h3>${districtName} - Bir haftalik ob-havo</h3>`;
+                dailyWeather.forEach(item => {
+                    const { main, weather, wind, dt_txt } = item;
+                    let weatherInfo = `
+                        <div>
+                            <h4>${dt_txt}</h4>
+                            <p>Harorat: ${main.temp}°C</p>
+                            <p>Ob-havo: ${weather[0].description}</p>
+                            <p>Shamol tezligi: ${wind.speed} m/s</p>
+                    `;
+
+                    // Yomg'ir va qor haqida qo'shimcha ma'lumotlar
+                    if (weather[0].main === "Rain") {
+                        weatherInfo += `<p>Yomg'ir: ${item.rain ? item.rain["3h"] : 0} mm</p>`;
+                    } else if (weather[0].main === "Snow") {
+                        weatherInfo += `<p>Kor: ${item.snow ? item.snow["3h"] : 0} mm</p>`;
+                    }
+
+                    weatherInfo += `</div>`;
+                    weatherDetails += weatherInfo;
+                });
+
+                document.getElementById("weather-details").innerHTML = weatherDetails;
+                weatherBox.style.display = "block";
+            } else {
+                weatherBox.style.display = "none";
+                alert("Ob-havo ma'lumotlarini yuklab bo'lmadi.");
+            }
+        }
+    </script>
+</body>
+</html>
