@@ -90,6 +90,8 @@
             background: #fff;
             border-radius: 5px;
             display: inline-block;
+            text-align: left;
+            max-width: 600px;
         }
         .map-container {
             margin-top: 2rem;
@@ -101,6 +103,13 @@
             height: 400px;
             border: 0;
             border-radius: 10px;
+        }
+        .hourly {
+            background: #f9f9f9;
+            margin-bottom: 10px;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
         }
     </style>
 </head>
@@ -153,8 +162,8 @@
             districtList.appendChild(listItem);
         });
 
-        // Ob-havo ma'lumotlarini olish (bir haftalik)
-        async function getWeeklyWeather(district) {
+        // Ob-havo ma'lumotlarini olish (bir haftalik va 24 soatlik)
+        async function getWeatherData(district) {
             const url = `${apiBaseUrl}forecast?q=${district}&appid=${apiKey}&units=metric&lang=uz`;
             try {
                 const response = await fetch(url);
@@ -171,12 +180,12 @@
 
         // Ob-havo ma'lumotlarini ko'rsatish
         async function showWeather(districtName) {
-            const weatherData = await getWeeklyWeather(districtName);
+            const weatherData = await getWeatherData(districtName);
             const weatherBox = document.getElementById("weather-info");
             if (weatherData) {
                 const { list } = weatherData;
-                // Faqat har 8 soatda bir marta ob-havo ma'lumotlarini olish (24 soatlik o'zgarishlarni ko'rsatish)
-                const dailyWeather = list.filter((item, index) => index % 8 === 0); // Har 8 ta element (taxminan bir kun)
+                // Haftalik ob-havo (har 8 soatda bir marta)
+                const dailyWeather = list.filter((item, index) => index % 8 === 0);
 
                 let weatherDetails = `<h3>${districtName} - Bir haftalik ob-havo</h3>`;
                 dailyWeather.forEach(item => {
@@ -187,17 +196,23 @@
                             <p>Harorat: ${main.temp}°C</p>
                             <p>Ob-havo: ${weather[0].description}</p>
                             <p>Shamol tezligi: ${wind.speed} m/s</p>
-                    `;
-
-                    // Yomg'ir va qor haqida qo'shimcha ma'lumotlar
-                    if (weather[0].main === "Rain") {
-                        weatherInfo += `<p>Yomg'ir: ${item.rain ? item.rain["3h"] : 0} mm</p>`;
-                    } else if (weather[0].main === "Snow") {
-                        weatherInfo += `<p>Kor: ${item.snow ? item.snow["3h"] : 0} mm</p>`;
-                    }
-
-                    weatherInfo += `</div>`;
+                        </div>`;
                     weatherDetails += weatherInfo;
+                });
+
+                // 24 soatlik ob-havo
+                weatherDetails += `<h3>${districtName} - Kunlik ob-havo</h3>`;
+                list.slice(0, 8).forEach(item => {
+                    const { main, weather, wind, dt_txt } = item;
+                    let hourlyInfo = `
+                        <div class="hourly">
+                            <h4>${dt_txt}</h4>
+                            <p>Harorat: ${main.temp}°C</p>
+                            <p>Ob-havo: ${weather[0].description}</p>
+                            <p>Shamol tezligi: ${wind.speed} m/s</p>
+                            <p>${weather[0].main === "Rain" ? `Yomg'ir: ${item.rain ? item.rain["3h"] : 0} mm` : "Yomg'ir yo'q"}</p>
+                        </div>`;
+                    weatherDetails += hourlyInfo;
                 });
 
                 document.getElementById("weather-details").innerHTML = weatherDetails;
