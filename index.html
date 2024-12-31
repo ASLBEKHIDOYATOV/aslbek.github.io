@@ -116,7 +116,7 @@
 <body>
     <header>
         <h1>Buxoro Viloyati Tumanlari Ob-Havosi</h1>
-        <p>Haftalik va kundalik ob-havo ma'lumotlari bilan tanishing</p>
+        <p>Kunlik ob-havo ma'lumotlari bilan tanishing</p>
     </header>
     <nav>
         <a href="#">Asosiy</a>
@@ -162,7 +162,7 @@
             districtList.appendChild(listItem);
         });
 
-        // Ob-havo ma'lumotlarini olish (bir haftalik va 24 soatlik)
+        // Ob-havo ma'lumotlarini olish (kunlik va soatlik)
         async function getWeatherData(district) {
             const url = `${apiBaseUrl}forecast?q=${district}&appid=${apiKey}&units=metric&lang=uz`;
             try {
@@ -184,28 +184,12 @@
             const weatherBox = document.getElementById("weather-info");
             if (weatherData) {
                 const { list } = weatherData;
-                // Haftalik ob-havo (har 8 soatda bir marta)
-                const dailyWeather = list.filter((item, index) => index % 8 === 0);
 
-                let weatherDetails = `<h3>${districtName} - Bir haftalik ob-havo</h3>`;
-                dailyWeather.forEach(item => {
-                    const { main, weather, wind, dt_txt } = item;
-                    let weatherInfo = `
-                        <div>
-                            <h4>${dt_txt}</h4>
-                            <p>Harorat: ${main.temp}°C</p>
-                            <p>Ob-havo: ${weather[0].description}</p>
-                            <p>Shamol tezligi: ${wind.speed} m/s</p>
-                        </div>`;
-                    weatherDetails += weatherInfo;
-                });
-
-                // 24 soatlik ob-havo
-                weatherDetails += `<h3>${districtName} - Kunlik ob-havo</h3>`;
+                let weatherDetails = `<h3>${districtName} - Kunlik ob-havo</h3>`;
                 list.slice(0, 8).forEach(item => {
                     const { main, weather, wind, dt_txt } = item;
                     let hourlyInfo = `
-                        <div class="hourly">
+                        <div class="hourly" onclick="showHourlyDetails('${districtName}', '${dt_txt}')">
                             <h4>${dt_txt}</h4>
                             <p>Harorat: ${main.temp}°C</p>
                             <p>Ob-havo: ${weather[0].description}</p>
@@ -221,6 +205,10 @@
                 weatherBox.style.display = "none";
                 alert("Ob-havo ma'lumotlarini yuklab bo'lmadi.");
             }
+        }
+
+        function showHourlyDetails(districtName, time) {
+            alert(`${districtName} tumanida soat ${time} uchun batafsil ob-havo ma'lumotlari hali qo'shilmagan.`);
         }
     </script>
 </body>
